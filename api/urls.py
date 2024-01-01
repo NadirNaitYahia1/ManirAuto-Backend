@@ -11,9 +11,9 @@ urlpatterns = [
     path('addCar/', views.addCar, name='addCar'),
     path('getCars/', views.getCars, name='getCar'),
     # path('getCar/', views.getCar, name='getCar'),
-    # path('getCarById/', views.getCarById, name='getCarById'),
-    # path('getCarByOwner/', views.getCarByOwner, name='getCarByOwner'),
-    # path('deleteCar/', views.deleteCar, name='deleteCar'),
-    # path('updateCar/', views.updateCar, name='updateCar'),
+    path('getCarById/', views.getCarById, name='getCarById'),
+    path('getCarByOwner/', views.getCarByOwner, name='getCarByOwner'),
+    path('deleteCar/', views.deleteCar, name='deleteCar'),
+    path('updateCar/', views.updateCar, name='updateCar'),
     
 ]
