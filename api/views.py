@@ -178,3 +178,154 @@ def getCars(request):
     print(cars)
 
     return Response(cars, status=200)
+
+
+#____________________________________________________________
+
+@api_view(['GET'])
+def getCarById(id):
+    car = Car.objects.filter(idCar=id).first()
+    if not car:
+        return Response({'error': 'Car not found'}, status=404)
+    
+    images = Image.objects.filter(idCar=car.idCar)
+    owner = getUserById(car.owner_id) if car.owner_id else None
+    car_data = {
+        'idCar': car.idCar,
+        'mark': car.mark,
+        'model': car.model,
+        'annee': car.annee,
+        'energie': car.energie,
+        'couleur': car.couleur,
+        'kilometrage': car.kilometrage,
+        'description': car.description,
+        'prix': car.prix,
+        'wilaya': car.wilaya,
+        'puissanceFiscale': car.puissanceFiscale,
+        'boiteVitesse': car.boiteVitesse,
+        'nombrePortes': car.nombrePortes,
+        'airbag': car.airbag,
+        'abs': car.abs,
+        'climatisation': car.climatisation,
+        'CDMP3Bluetooth': car.CDMP3Bluetooth,
+        'directionAssistee': car.directionAssistee,
+        'owner': owner,
+        'images': [str(image.image.url) for image in images]
+    }
+    return Response(car_data, status=200)
+
+@api_view(['GET'])
+def getCarByOwner(request, id):
+    try:
+        user = User.objects.get(idUser=id)
+        cars = Car.objects.filter(owner=user)
+        cars_list = []
+        for car in cars:
+            images = Image.objects.filter(idCar=car.idCar)
+            owner = getUserById(car.owner_id) if car.owner_id else None
+
+            car_data = {
+                'idCar': car.idCar,
+                'mark': car.mark,
+                'model': car.model,
+                'annee': car.annee,
+                'energie': car.energie,
+                'couleur': car.couleur,
+                'kilometrage': car.kilometrage,
+                'description': car.description,
+                'prix': car.prix,
+                'wilaya': car.wilaya,
+                'puissanceFiscale': car.puissanceFiscale,
+                'boiteVitesse': car.boiteVitesse,
+                'nombrePortes': car.nombrePortes,
+                'airbag': car.airbag,
+                'abs': car.abs,
+                'climatisation': car.climatisation,
+                'CDMP3Bluetooth': car.CDMP3Bluetooth,
+                'directionAssistee': car.directionAssistee,
+                'owner': owner,
+                'images': [str(image.image.url) for image in images]
+            }
+            cars_list.append(car_data)
+
+        return Response(cars_list, status=200)
+
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=404)
+
+@api_view(['DELETE'])
+def deleteCar(request, id):
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or 'Bearer ' not in auth_header:
+        return Response({'error': 'not authenticated'}, status='400')
+
+    try:
+        token = auth_header.split(' ')[1]
+        payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+        user = User.objects.get(email=payload['email'])
+        print("user", user)
+    except jwt.ExpiredSignatureError:
+        return Response({'error': 'session expired'}, status='400')
+    except jwt.InvalidTokenError:
+        return Response({'error': 'invalid token'}, status='400')
+    except User.DoesNotExist:
+        return Response({'error': 'user not found'}, status='400')
+    
+    try:
+        car = Car.objects.get(idCar=id)
+        # Vérifier si l'utilisateur actuel est le propriétaire de la voiture
+        if car.owner != user:
+            return Response({'error': 'Unauthorized'}, status='403')
+        
+        car.delete()
+        return Response({'message': 'Car deleted successfully'}, status=200)
+    except Car.DoesNotExist:
+        return Response({'error': 'Car not found'}, status=404)
+
+
+@api_view(['PUT'])
+def updateCar(request, id):
+    auth_header = request.headers.get('Authorization')
+    if not auth_header or 'Bearer ' not in auth_header:
+        return Response({'error': 'not authenticated'}, status='400')
+
+    try:
+        token = auth_header.split(' ')[1]
+        payload = jwt.decode(token, 'secret', algorithms=['HS256'])
+        user = User.objects.get(email=payload['email'])
+        print("user", user)
+    except jwt.ExpiredSignatureError:
+        return Response({'error': 'session expired'}, status='400')
+    except jwt.InvalidTokenError:
+        return Response({'error': 'invalid token'}, status='400')
+    except User.DoesNotExist:
+        return Response({'error': 'user not found'}, status='400')
+    
+    try:
+        car = Car.objects.get(idCar=id)
+        # Vérifier si l'utilisateur actuel est le propriétaire de la voiture
+        if car.owner != user:
+            return Response({'error': 'Unauthorized'}, status='403')
+        
+        car.mark = request.data.get('mark', car.mark)
+        car.model = request.data.get('model', car.model)
+        car.annee = request.data.get('annee', car.annee)
+        car.energie = request.data.get('energie', car.energie)
+        car.couleur = request.data.get('couleur', car.couleur)
+        car.kilometrage = request.data.get('kilometrage', car.kilometrage)
+        car.description = request.data.get('description', car.description)
+        car.prix = request.data.get('prix', car.prix)
+        car.wilaya = request.data.get('wilaya', car.wilaya)
+        car.puissanceFiscale = request.data.get('puissanceFiscale', car.puissanceFiscale)
+        car.boiteVitesse = request.data.get('boiteVitesse', car.boiteVitesse)
+        car.nombrePortes = request.data.get('nombrePortes', car.nombrePortes)
+        car.airbag = request.data.get('airbag', car.airbag)
+        car.abs = request.data.get('abs', car.abs)
+        car.climatisation = request.data.get('climatisation', car.climatisation)
+        car.CDMP3Bluetooth = request.data.get('CDMP3Bluetooth', car.CDMP3Bluetooth)
+        car.directionAssistee = request.data.get('directionAssistee', car.directionAssistee)
+
+        car.save()
+        return Response({'message': 'Car updated successfully' , 'car': car}, status=200)
+    except Car.DoesNotExist:
+        return Response({'error': 'Car not found'}, status=404)
